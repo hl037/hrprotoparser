@@ -23,6 +23,25 @@ TYPE = r'(?P<type>'+ID+r')'
 
 space_re = re.compile('\s*')
 
+class Flag(object):
+  flag_re = re.compile(rf'F\s+{NAME}\s*=\s*{VAL}{COMMENT}', re.A | re.DOTALL | re.MULTILINE)
+  def __init__(self, m):
+    self.m = m
+    
+  @lazyproperty
+  def name(self):
+    return self.m.group('name').strip()
+    
+  @lazyproperty
+  def val(self):
+    return self.m.group('val').strip()
+
+  def __repr__(self):
+    return f'FLAG[{self.name}] = {self.val}'
+
+  def __str__(self):
+    return repr(self)
+
 class ConstantCycleError(RuntimeError):
   pass
 
@@ -70,7 +89,10 @@ class Constant(object):
       raise ConstantCycleError()
     self._computing = True
     s = Constant.name_re.sub(lambda x : '(' + self.table[x.group(0)].computedStr + ')', self.val).strip()
-    return "{0:#010x}".format(eval(s) & 0xffffffff)
+    if self.type not in ('double', 'float') :
+      return "{0:#010x}".format(eval(s.replace('/','//')) & 0xffffffff)
+    else :
+      return str(eval(s))
 
   def __repr__(self):
     return '{} = {}  ({}) // {}'.format(self.name, self.val, self.computed, self.comment)
@@ -118,8 +140,9 @@ class Enum(Type):
     self.constants = []
     self.Types = Types
   
-  def addConstant(self, *args, **kwargs):
-    self.constants.append(*args, **kwargs)
+  def addConstant(self, c):
+    c.type = self.type
+    self.constants.append(c)
     
   @lazyproperty
   def name(self):
@@ -306,7 +329,7 @@ class FileIterator:
   def __next__(self):
     self.line += 1
     self.cur_line = next(self.it)
-    return self.cur_line
+    return self.cur_line.strip()
 
   def seek0(self):
     self.f.seek(0)
@@ -329,7 +352,7 @@ def addFields(Consts, S, s, it):
       m = Field.comment_continuation.fullmatch(l)
       if m:
         continue
-      raise ParseError(f'{it.filename}:{it.line} : in [ {rper(s)} ], Error while treating "{it.cur_line}"')
+      raise ParseError(f'{it.filename}:{it.line} : in [ {repr(s)} ], Error while treating "{it.cur_line}"')
     s.addField(Consts, S, m)
 
 class Protocol(object):
@@ -359,18 +382,21 @@ class Protocol(object):
     self.S = []
     self.E = []
     self.P = []
+    self.F = {}
 
 
   def parse(self, f, filename, ):
     it = FileIterator(f, filename)
     try:
       for l in it:
-        m = Constant.line_re.fullmatch(l)
-        if m:
+        if m := Constant.line_re.fullmatch(l):
           c = Constant(self.Constants, m)
           self.Constants[c.name] = c
           self.C.append(c)
           self.GC.append(c)
+        elif m := Flag.flag_re.fullmatch(l) :
+          f = Flag(m)
+          self.F[f.name] = f
         else:
           m = Enum.enum_re.fullmatch(l)
           if m:
@@ -417,6 +443,9 @@ class Protocol(object):
   def __repr__(self):
     o = io.StringIO('')
     o.write('Protocol(\n')
+    o.write('F=[\n  ')
+    o.write(',\n  '.join(repr(f) for f in self.F.values()))
+    o.write('\n],\n')
     o.write('C=[\n  ')
     o.write(',\n  '.join(repr(c) for c in self.C))
     o.write('\n],\n')

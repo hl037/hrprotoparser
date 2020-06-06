@@ -29,7 +29,7 @@ from hrprotoparser.cli import hrprotoparser_cmd
 plugin = C()
 
 # Put above additionnal options / arguments
-@hrprotoparser_cmd(invokeCmd)
+@hrprotoparser_cmd()
 def hrpp_cli(proto, **kwargs):
   """
   hrpotoparser {{_p.name}} plugin.
