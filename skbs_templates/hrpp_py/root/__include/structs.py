@@ -139,7 +139,7 @@ class Array(Type):
     if len(val) > self.n:
       raise ValueError(f'Inconsistent array size : {len(self.val)=} > {len(val)=}')
     if deep :
-      for v, nv in zip(self.internal_val, nval) :
+      for v, nv in zip(self.internal_val, val) :
         v.set(nv)
     elif len(val) != self.n :
       raise ValueError(f'Inconsistent array size : {len(self.val)=} != {len(val)=}')
@@ -149,7 +149,7 @@ class Array(Type):
       self.internal_val = val
 
   def get_flat(self):
-    return chain(v.get_flat() for v in self.val)
+    return chain.from_iterable(v.get_flat() for v in self.internal_val)
 
   def set_flat(self, val):
     nval = self.type.nval
@@ -187,7 +187,7 @@ class VarLenArray(Array, abstract=True):
     self.struct = struct.Struct(self.fmt)
     self.size = self.type.size * n
     if init :
-      delta = n - self.internal_val
+      delta = n - len(self.internal_val)
       if delta > 0 :
         self.internal_val = list(chain(self.internal_val, ( self.type() for _ in range(delta) )))
       else:
@@ -313,7 +313,7 @@ class VarLenPacket(Packet, abstract=True):
   @property
   def size(self):
 ##   if psize > 0:
-    return self.data.size + self.header_type_len
+    return {{psize}} + self.header_type_len + self.data.size
 ##   -
 ##   else:
     return compute_total_size(self.data.size + self.header_type_len)
@@ -409,7 +409,7 @@ class {{sname}}(Struct):
 
   @property
   def fmt(self):
-    return self._fmt + self.varlen_field.fmt
+    return self._fmt + self.varlen_field.fmt[1:]
 
   @property
   def struct(self):
