@@ -1,14 +1,14 @@
 //# new_path = dest.with_name(_p.prefix + dest.name)
 
 //# if _p.bool(_p.proto.F['FIXEDTSIZE'].val):
-//#    tsize = int(_p.proto.F['FIXEDTSIZE'].val) * 8
+//#    tsize = int(_p.proto.F['FIXEDTSIZE'].val)
 //# -
 //# else:
 //#    tsize = 0
 //# -
 
 //# if _p.bool(_p.proto.F['FIXEDSIZE'].val):
-//#    psize = int(_p.proto.F['FIXEDSIZE'].val) * 8
+//#    psize = int(_p.proto.F['FIXEDSIZE'].val)
 //# -
 //# elif _p.bool(_p.proto.F['VARSIZE'].val):
 //#    psize = 0

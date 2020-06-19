@@ -136,7 +136,7 @@ def sizeof2(t):
     return (c_types[t.name][1], None)
   if t.order == hrpp.Array.order:
     if t.nb is None:
-      return (0, t)
+      return (0, t.t)
     size, varlen_t = sizeof2(t.t)
     if varlen_t is not None:
       raise RuntimeError('Array of varlen Struct')

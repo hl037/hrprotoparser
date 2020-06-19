@@ -1,14 +1,14 @@
 //# new_path = dest.with_name(_p.prefix + dest.name)
 
 //# if _p.bool(_p.proto.F['FIXEDTSIZE'].val):
-//#    tsize = int(_p.proto.F['FIXEDTSIZE'].val) * 8
+//#    tsize = int(_p.proto.F['FIXEDTSIZE'].val)
 //# -
 //# else:
 //#    tsize = 0
 //# -
 
 //# if _p.bool(_p.proto.F['FIXEDSIZE'].val):
-//#    psize = int(_p.proto.F['FIXEDSIZE'].val) * 8
+//#    psize = int(_p.proto.F['FIXEDSIZE'].val)
 //# -
 //# elif _p.bool(_p.proto.F['VARSIZE'].val):
 //#    psize = 0
@@ -60,7 +60,7 @@ size_t {{_p.prefix}}hrp_packet_size({{_p.prefix}}hrp_ptype_t type){
 const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(_this->remain && *size){
-    _this->size |= ( *bytes << ({{psize}} - _this->remain) );
+    _this->size |= ( *bytes << ({{psize * 8}} - _this->remain) );
     ++bytes;
     --(*size);
     //# if psize is not None :
@@ -99,7 +99,7 @@ const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, cons
 void _{{_p.prefix}}hrp_server_after_read_size({{_p.prefix}}hrp_t * _this){
   if(_this->remain == 0){
     _this->state = {{_p.prefix}}hrp_READ_TYPE;
-    _this->remain = {{tsize if tsize else 64}};
+    _this->remain = {{tsize * 8 if tsize else 64}};
   }
 }
 
@@ -120,12 +120,12 @@ const void * _{{_p.prefix}}hrp_server_skip({{_p.prefix}}hrp_t * _this, const voi
     //# if psize is not None :
     _this->size = 0;
     _this->state = {{_p.prefix}}hrp_READ_SIZE;
-    _this->remain = {{psize if psize else 64}};
+    _this->remain = {{psize * 8 if psize else 64}};
     _this->n_h_read = 0;
     //# -
     //# else :
     _this->state = {{_p.prefix}}hrp_READ_TYPE;
-    _this->remain = {{tsize if tsize else 64}};
+    _this->remain = {{tsize * 8 if tsize else 64}};
     //# -
   } 
   return bytes;
@@ -146,7 +146,7 @@ const void * _{{_p.prefix}}hrp_server_skip({{_p.prefix}}hrp_t * _this, const voi
 const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(_this->remain && *size){
-    _this->type |= ( *bytes << ({{tsize}} - _this->remain) );
+    _this->type |= ( *bytes << ({{tsize * 8}} - _this->remain) );
     ++bytes;
     --(*size);
     //# if psize is not None :
@@ -230,7 +230,7 @@ void _{{_p.prefix}}hrp_server_after_read({{_p.prefix}}hrp_t * _this){
     //# -
     //# else :
     _this->state = {{_p.prefix}}hrp_READ_TYPE;
-    _this->remain = {{tsize if tsize else 64}};
+    _this->remain = {{tsize * 8 if tsize else 64}};
     //# -
   }
 }
@@ -280,7 +280,7 @@ void {{_p.prefix}}hrp_server_init({{_p.prefix}}hrp_t * _this){
 //# -
 //# else :
   _this->state = {{_p.prefix}}hrp_READ_TYPE;
-  _this->remain = {{tsize if tsize else 64}};
+  _this->remain = {{tsize * 8 if tsize else 64}};
 //# -
 }
 

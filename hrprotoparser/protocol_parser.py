@@ -101,6 +101,7 @@ class Constant(object):
     return repr(self)
 
 class IntConstant(object):
+  """ A raw number """
   def __init__(self, val):
     self.val = val
     self.name = 'C' + str(val)
