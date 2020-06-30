@@ -61,14 +61,14 @@ typedef unsigned __int64 uint64_t;
 
 
 //# if tsize:
-typedef {{ {'1': 'uint8_t', '2': 'uint18_t', '4':'uint32_t', '8':'uint64_t' }[tsize] }} {{_p.prefix}}hrp_ptype_t;
+typedef {{ {1: 'uint8_t', 2: 'uint18_t', 4:'uint32_t', 8:'uint64_t' }[tsize] }} {{_p.prefix}}hrp_ptype_t;
 //# -
 //# else:
 typedef uint64_t {{_p.prefix}}hrp_ptype_t;
 //# -
 
 //# if psize is not None:
-typedef {{ {'1': 'uint8_t', '2': 'uint18_t', '4':'uint32_t', '8':'uint64_t' }[psize] }} {{_p.prefix}}hrp_stype_t;
+typedef {{ {1: 'uint8_t', 2: 'uint18_t', 4:'uint32_t', 8:'uint64_t' }[psize] }} {{_p.prefix}}hrp_stype_t;
 //# -
 //# else:
 typedef uint64_t {{_p.prefix}}hrp_stype_t;

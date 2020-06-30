@@ -149,6 +149,8 @@ def getPyType(f):
       a_begin += 'Array.get_class('
       a_end += f', {t.nb.name if t.nb.kind is hrpp.Constant.NAMED else str(t.nb.computed)})'
     t = t.t
+  if t.order == hrpp.Enum.order:
+    t = t.type
   if t.order == hrpp.Builtin.order:
     tt = py_types[t.name]
   else:
@@ -280,5 +282,13 @@ def encode_varint(i):
 def bool(v):
   return v.lower() in ('1', 'true', 'yes', 'y')
 
+
+@export
+def is_aliased_packet(s):
+  if s.order != hrpp.Alias.order :
+    return False
+  while s.order == hrpp.Alias.order :
+    s = s.alias
+  return s.order == hrpp.Packet.order
 
 

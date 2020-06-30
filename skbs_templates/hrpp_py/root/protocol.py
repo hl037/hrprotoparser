@@ -21,6 +21,7 @@
 
 from enum import Enum, IntEnum
 import struct
+from typing import Type as _typehint_Type_
 
 class FloatEnum(float, Enum):
   pass

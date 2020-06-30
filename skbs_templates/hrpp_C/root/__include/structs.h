@@ -104,7 +104,7 @@ static const size_t sizeof_{{sname}}_varlen = {{sizeof_varlen_t}};
 static const {{_p.prefix}}hrp_ptype_t {{sname}}_type = {{s.type.name}};
 #endif
 //# -
-//# elif s.order is _p.Alias.order:
+//# elif s.order == _p.Alias.order:
 typedef {{_p.struct_name(s.alias)}}_t {{sname}}_t;
 #ifdef __cplusplus
 constexpr size_t sizeof_{{sname}} = {{sname}}_t::size;

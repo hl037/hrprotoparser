@@ -261,10 +261,6 @@ class Struct(Type):
   def _field_list(self):
     raise NotImplementedError()
     
-class Packets(object):
-  pass
-
-packets = Packets()
 
 class Packet():
   """
@@ -299,7 +295,7 @@ class Packet():
       return self.data.decode(b[self.header_len:])
   
   @classmethod
-  def new(cls, name, **kwargs):
+  def new(cls, name, **kwargs) -> _typehint_Type_['__class__']:
     return types.new_class(name, (cls,), kwargs, None)
 
 ## if psize is not None:
@@ -331,15 +327,15 @@ class VarLenPacket(Packet, abstract=True):
   @property
   def header(self):
     return self.header_size + self.header_type
-# -
+## -
   
   
 ## for s in chain(_p.proto.S, _p.proto.P) :
-## sname = _p.struct_name(s)
-## sizeof_s, varlen_t, nval, fmt = _p.sizeof4(s)
-## if varlen_t is not None:
-##   sizeof_varlen_t = _p.sizeof(varlen_t)
-## -
+##   sname = _p.struct_name(s)
+##   sizeof_s, varlen_t, nval, fmt = _p.sizeof4(s)
+##   if varlen_t is not None:
+##     sizeof_varlen_t = _p.sizeof(varlen_t)
+##   -
 ##
 ##   if s.order in (_p.Struct.order, _p.Packet.order) :
 ##
@@ -423,7 +419,18 @@ class {{sname}}(Struct):
   def nval(self):
     return self._nval + self.varlen_field.nval
 ##     -
+##   -
 
+## -
+
+
+class Packets(object):
+## for s in _p.proto.P :
+##   sname = _p.struct_name(s)
+##   sizeof_s, varlen_t, nval, fmt = _p.sizeof4(s)
+##   if varlen_t is not None:
+##     sizeof_varlen_t = _p.sizeof(varlen_t)
+##   -
 ##   if s.order == _p.Packet.order:
 ##     header_type = encode_type(s.type.computed)
 ##     if varlen_t is None:
@@ -440,10 +447,18 @@ class {{sname}}(Struct):
 ##         header_psize = _psize.pack(s_psize)
 ##       -
 ##     header = header_psize + header_type
-packets.{{sname}} = Packet.new({{repr(sname)}}, struct={{sname}}, header={{repr(header)}}, size={{s_psize}}, type={{s.type.computed}})
+  {{sname}} = Packet.new({{repr(sname)}}, struct={{sname}}, header={{repr(header)}}, size={{s_psize}}, type={{s.type.computed}})
 ##     -
 ##     else:
-packets.{{sname}} = VarLenPacket.new({{repr(sname)}}, struct={{sname}}, header_type={{repr(header_type)}}, type={{s.type.computed}})
+  {{sname}} = VarLenPacket.new({{repr(sname)}}, struct={{sname}}, header_type={{repr(header_type)}}, type={{s.type.computed}})
+##     -
 ##   -
+##   elif _p.is_aliased_packet(s):
+  {{sname}} = {{_p.struct_name(s.alias)}}
+##   -
+## -
 
+packets = Packets()
+
+del Packets
 
