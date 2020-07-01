@@ -14,7 +14,7 @@ class {{e.name}}(Enum):
   pass
 ##   -
 ##   for c in e.constants:
-  {{c.name}} = {{hex(c.computed)}}
+  {{c.name}} = {{hex(c.computed) if c.kind == _p.Constant.INT else repr(c.computed)}}
 ##   -
 ##   for c in e.constants:
 {{c.name}} = {{e.name}}.{{c.name}}
@@ -24,7 +24,7 @@ class {{e.name}}(Enum):
 ## -
 
 ## for c in _p.proto.GC:
-{{c.name}} = {{hex(c.computed)}}
+{{c.name}} = {{hex(c.computed) if c.kind == _p.Constant.INT else repr(c.computed)}}
 ## -
 
 

@@ -90,9 +90,10 @@ class Constant(object):
     self._computing = True
     s = Constant.name_re.sub(lambda x : '(' + self.table[x.group(0)].computedStr + ')', self.val).strip()
     if self.type not in ('double', 'float') :
-      return "{0:#010x}".format(eval(s.replace('/','//')) & 0xffffffff)
+      n = eval(s.replace('/','//'))
+      return repr(n)
     else :
-      return str(eval(s))
+      return repr(eval(s))
 
   def __repr__(self):
     return '{} = {}  ({}) // {}'.format(self.name, self.val, self.computed, self.comment)

@@ -86,18 +86,6 @@ class Type(object):
   def get_flat(self):
     return self.val,
 
-  @property
-  def struct(self):
-    raise NotImplementedError()
-
-  @property
-  def size(self):
-    raise NotImplementedError()
-
-  @property
-  def nval(self):
-    raise NotImplementedError()
-
 ## for name, size, fmt, init in chain(_p.int_types, _p.uint_types, _p.float_types) :
 class {{name}}(Type):
   """
@@ -128,6 +116,7 @@ class Array(Type):
     cls.fmt = '<' + type.struct.format[1:] * n
     cls.struct = struct.Struct(cls.fmt)
     cls.size = type.size * n
+    cls.nval = type.nval * n
     super().__init_subclass__(**kwargs)
   
   def __init__(self, *args, **kwargs):
@@ -153,7 +142,7 @@ class Array(Type):
 
   def set_flat(self, val):
     nval = self.type.nval
-    for i, v in enumerate(self.val) :
+    for i, v in enumerate(self.internal_val) :
       v.set_flat(val[i * nval:(i + 1) * nval])
 
   def __getitem__(self, k):
@@ -186,6 +175,7 @@ class VarLenArray(Array, abstract=True):
     self.fmt = '<' + self.type.struct.format[1:] * n
     self.struct = struct.Struct(self.fmt)
     self.size = self.type.size * n
+    self.nval = self.type.nval * n
     if init :
       delta = n - len(self.internal_val)
       if delta > 0 :
@@ -215,6 +205,11 @@ class VarLenArray(Array, abstract=True):
       self.resize(len(val))
       super().set(val, deep)
 ## -
+
+  def decode(self, b):
+    varlen_size = len(b)
+    self.varlen_field.resize(varlen_size // self.type.size)
+    return super().decode(b)
 
 class Fields(object):
   pass
@@ -253,14 +248,6 @@ class Struct(Type):
   def set_flat(self, val):
     raise NotImplementedError()
 
-  @property
-  def _fields(self):
-    raise NotImplementedError()
-  
-  @property
-  def _field_list(self):
-    raise NotImplementedError()
-    
 
 class Packet():
   """
@@ -276,6 +263,7 @@ class Packet():
     cls.size = size
     cls.type = type
     cls.header_len = len(header)
+    cls._name = cls.__name__
     
   def __init__(self, data=None, ref=True):
     if data is None :
@@ -305,6 +293,7 @@ class VarLenPacket(Packet, abstract=True):
     cls.header_type = header_type
     cls.header_type_len = len(header_type)
     cls.type = type
+    cls._name = cls.__name__
 
   @property
   def size(self):
@@ -342,15 +331,27 @@ class VarLenPacket(Packet, abstract=True):
 class {{sname}}(Struct):
   _fmt = '<{{fmt}}'
   _size = {{sizeof_s}}
-  _fields = Fields()
-  _field_list = []
+  field_list = []
   _nval = {{nval}}
+  _name = '{{sname}}'
+
+  def __init__(self, *args, **kwargs):
+    self._fields = Fields()
+##     for f in s.fields:
+    self._fields.{{f.name}} = {{_p.getPyType(f)}}()
+##     -
+    self._field_list = [
+##     for f in s.fields:
+      self._fields.{{f.name}},
+##     -
+    ]
+    super().__init__(*args, **kwargs)
   
   # Fields
 
 ##     for f in s.fields:
-  _fields.{{f.name}} = {{_p.getPyType(f)}}()
-  _field_list.append(_fields.{{f.name}})
+  {{f.name}} = {{_p.getPyType(f)}}
+  field_list.append({{f.name}})
   @property
   def {{f.name}}(self):
     return self._fields.{{f.name}}.get()
@@ -399,6 +400,11 @@ class {{sname}}(Struct):
   nval = _nval
 ##     -
 ##     else:
+  def decode(self, b):
+    varlen_size = len(b) - self._size
+    self.varlen_field.resize(varlen_size // self.varlen_field.type.size)
+    return super().decode(b)
+
   @property
   def varlen_field(self):
     return self.{{_p.varlen_field(s)}}
@@ -425,6 +431,7 @@ class {{sname}}(Struct):
 
 
 class Packets(object):
+  _by_type = {}
 ## for s in _p.proto.P :
 ##   sname = _p.struct_name(s)
 ##   sizeof_s, varlen_t, nval, fmt = _p.sizeof4(s)
@@ -439,8 +446,8 @@ class Packets(object):
 ##         header_psize = b''
 ##       -
 ##       elif psize == 0:
-##         s_psize = compute_total_size(len(header_type) + sizeof_s)
-##         header_psize = encode_varint(s_psize)
+##         s_psize = _p.compute_total_size(len(header_type) + sizeof_s)
+##         header_psize = _p.encode_varint(s_psize)
 ##       -
 ##       else:
 ##         s_psize = psize + len(header_type) + sizeof_s
@@ -457,6 +464,12 @@ class Packets(object):
   {{sname}} = {{_p.struct_name(s.alias)}}
 ##   -
 ## -
+## for s in _p.proto.P :
+##   sname = _p.struct_name(s)
+  _by_type[{{s.type.computed}}] = {{sname}}
+## -
+  def __getitem__(self, k):
+    return self._by_type[k]
 
 packets = Packets()
 

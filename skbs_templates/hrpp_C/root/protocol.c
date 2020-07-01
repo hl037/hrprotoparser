@@ -1,13 +1,14 @@
 //# new_path = dest.with_name(_p.prefix + dest.name)
-
-//# if _p.bool(_p.proto.F['FIXEDTSIZE'].val):
+//#
+//# from itertools import chain
+//#
+//# if int(_p.proto.F['FIXEDTSIZE'].val):
 //#    tsize = int(_p.proto.F['FIXEDTSIZE'].val)
 //# -
 //# else:
 //#    tsize = 0
 //# -
-
-//# if _p.bool(_p.proto.F['FIXEDSIZE'].val):
+//# if int(_p.proto.F['FIXEDSIZE'].val):
 //#    psize = int(_p.proto.F['FIXEDSIZE'].val)
 //# -
 //# elif _p.bool(_p.proto.F['VARSIZE'].val):
@@ -225,7 +226,7 @@ void _{{_p.prefix}}hrp_server_after_read({{_p.prefix}}hrp_t * _this){
     //# if psize is not None :
     _this->size = 0;
     _this->state = {{_p.prefix}}hrp_READ_SIZE;
-    _this->remain = {{psize if psize else 64}};
+    _this->remain = {{psize * 8 if psize else 64}};
     _this->n_h_read = 0;
     //# -
     //# else :
@@ -275,7 +276,7 @@ void {{_p.prefix}}hrp_server_init({{_p.prefix}}hrp_t * _this){
 //# if psize is not None :
   _this->size = 0;
   _this->state = {{_p.prefix}}hrp_READ_SIZE;
-  _this->remain = {{psize if psize else 64}};
+  _this->remain = {{psize * 8 if psize else 64}};
   _this->n_h_read = 0;
 //# -
 //# else :

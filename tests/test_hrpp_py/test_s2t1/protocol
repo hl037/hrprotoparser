@@ -1,0 +1,159 @@
+
+Flags :
+
+F FIXEDSIZE = 2
+F VARSIZE= 0
+F FIXEDTSIZE = 1
+
+C int8 const_i8p = 42
+C int16 const_i16p = 420
+C int32 const_i32p = 2**(24)+42
+C int64 const_i64p = 2**(48)+42
+
+C int8 const_i8n = -42
+C int16 const_i16n = -420
+C int32 const_i32n = -2**(24)+42
+C int64 const_i64n = -2**(48)+42
+
+C uint8 const_ui8p = 150
+C uint16 const_ui16p = 2**(16) - 42
+C uint32 const_ui32p = 2**(32) - 42
+C uint64 const_ui64p = 2**(64) - 42
+
+C float const_f32 = 42.42
+C double const_f64 = 42.42
+
+C int8 array_size = 5
+
+Début du protocol
+```
+E PType : uint8 {
+  P_EMPTY = 0
+  P_ALL_NUMS = 1
+  P_ALL_ARRAYS = 2
+  P_STRUCT = 3
+  P_STRUCT_STRUCT = 4
+  P_ARRAY_STRUCT = 5
+  P_ARRAY_STRUCT_STRUCT = 6
+  P_VARLEN_VAL = 7
+  P_VARLEN_STRUCT = 8
+}
+```
+
+
+S s1 {
+  int8 i8
+  float f
+  int16 i16
+  double d
+}
+
+S s2 {
+  float f
+  double d
+  int16 i16
+  int8 i8
+}
+
+S s3 {
+  s1 s1_
+  s2 s2_
+}
+
+S s4 {
+  s2[2] s2_
+  int16 i16
+  s1    s1_
+}
+
+S s5 {
+  int8 i8
+  int8[array_size] ai8
+  s4[] s4_vl
+}
+
+
+<> empty(P_EMPTY) {
+
+}
+
+<> all_nums(P_ALL_NUMS) {
+  int8 i8p
+  int16 i16p
+  int32 i32p
+  int64 i64p
+
+  int8 i8n
+  int16 i16n
+  int32 i32n
+  int64 i64n
+
+  uint8 ui8p
+  uint16 ui16p
+  uint32 ui32p
+  uint64 ui64p
+
+  float f32
+  double f64
+}
+
+<> all_arrays(P_ALL_ARRAYS) {
+  int8[array_size] i8p
+  int16[array_size] i16p
+  int32[array_size] i32p
+  int64[array_size] i64p
+
+  int8[array_size] i8n
+  int16[array_size] i16n
+  int32[array_size] i32n
+  int64[array_size] i64n
+
+  uint8[array_size] ui8p
+  uint16[array_size] ui16p
+  uint32[array_size] ui32p
+  uint64[array_size] ui64p
+
+  float[array_size] f32
+  double[array_size] f64
+}
+
+<> struct_(P_STRUCT) {
+  int8 i8
+  s1 s1_
+  s2 s2_
+}
+
+<> struct_struct(P_STRUCT_STRUCT) {
+  int8 i8
+  s1 s1_
+  s2 s2_
+  s3 s3_
+}
+
+<> array_struct(P_ARRAY_STRUCT) {
+  int8[array_size] i8
+  s1[array_size] s1_
+  s2[array_size] s2_
+}
+
+<> array_struct_struct(P_ARRAY_STRUCT_STRUCT) {
+  int8[array_size] i8
+  s1[array_size] s1_
+  s2[array_size] s2_
+  s3[array_size] s3_
+}
+
+<> varlen_val(P_VARLEN_VAL) {
+  int8 i8
+  int16[] vl_i16
+}
+
+<> varlen_struct(P_VARLEN_STRUCT) {
+  int8[array_size] i8
+  s1[array_size] s1_
+  s5 s5_
+}
+
+
+
+
