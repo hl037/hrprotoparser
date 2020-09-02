@@ -2,38 +2,65 @@
 //#
 //# from itertools import chain
 //#
-//# if int(_p.proto.F['FIXEDTSIZE'].val):
-//#    tsize = int(_p.proto.F['FIXEDTSIZE'].val)
+//# if 'PSIZE' in _p.proto.F and 'TSIZE' in _p.proto.F:
+//#    psize = int(_p.proto.F['PSIZE'].val)
+//#    tsize = int(_p.proto.F['TSIZE'].val)
+//#    if psize < 0 :
+//#      psize = None
+//#    -
+//#    if tsize < 0 :
+//#      tsize = None
+//#    -
 //# -
 //# else:
-//#    tsize = 0
-//# -
-//# if int(_p.proto.F['FIXEDSIZE'].val):
-//#    psize = int(_p.proto.F['FIXEDSIZE'].val)
-//# -
-//# elif _p.bool(_p.proto.F['VARSIZE'].val):
-//#    psize = 0
-//# -
-//# else:
-//#    psize = None
+//#   #Legacy code
+//#   import warnings
+//#   warnings.warn('PSIZE and TSIZE flags should be defined in the protocol', FutureWarning)
+//#   if int(_p.proto.F['FIXEDTSIZE'].val):
+//#      tsize = int(_p.proto.F['FIXEDTSIZE'].val)
+//#   -
+//#   else:
+//#      tsize = 0
+//#   -
+//#   if int(_p.proto.F['FIXEDSIZE'].val):
+//#      psize = int(_p.proto.F['FIXEDSIZE'].val)
+//#   -
+//#   elif _p.bool(_p.proto.F['VARSIZE'].val):
+//#      psize = 0
+//#   -
+//#   else:
+//#      psize = None
+//#   -
 //# -
 
 #include "{{_p.prefix}}protocol.h"
 
 #include <stdlib.h>
 
+//# if _p.parser :
+
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
+void _{{_p.prefix}}hrp_server_after_read({{_p.prefix}}hrp_t * _this);
+
 void {{_p.prefix}}hrp_server_handle_packet({{_p.prefix}}hrp_t * _this){
+//# if _p.single_handler :
+  _this->handler(&_this->current_packet);
+//# -
+//# else:
   switch(_this->current_packet->header.type){
-//# for p in _p.proto.P:
-//# sname = _p.struct_name(p)
+//#   for p in _p.proto.P:
+//#     sname = _p.struct_name(p)
     case {{p.type.val}}:
-      return _this->handler.{{sname}}(({{sname}}_t*) _this->current_packet);
+      _this->handler.{{sname}}(({{sname}}_t*) _this->current_packet);
       break;
-      {{_p.prefix}}hrp_pfree(_this->current_packet);
+//#   -
 //# -
   }
+  {{_p.prefix}}hrp_pfree(_this->current_packet);
 }
 
+//# -
 
 size_t {{_p.prefix}}hrp_packet_size({{_p.prefix}}hrp_ptype_t type){
   switch(type){
@@ -48,7 +75,9 @@ size_t {{_p.prefix}}hrp_packet_size({{_p.prefix}}hrp_ptype_t type){
 }
 
 
-//# if psize is not None:
+//# if _p.parser :
+
+//# if psize != 0:
 /**
  * Read the packet size
  * @param data pointer to the buffer
@@ -58,13 +87,15 @@ size_t {{_p.prefix}}hrp_packet_size({{_p.prefix}}hrp_ptype_t type){
  * Note : `size` and `_this->remaining` will be changed accordingly.
  */
 //# if psize:
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(_this->remain && *size){
     _this->size |= ( *bytes << ({{psize * 8}} - _this->remain) );
     ++bytes;
     --(*size);
-    //# if psize is not None :
+    //# if psize != 0:
     ++_this->n_h_read;
     //# -
     _this->remain -= 8;
@@ -73,6 +104,8 @@ const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, cons
 }
 //# -
 //# else:
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(*size){
@@ -80,7 +113,7 @@ const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, cons
     if(*bytes & 0b10000000){
       ++bytes;
       --(*size);
-      //# if psize is not None :
+      //# if psize != 0:
       ++_this->n_h_read;
       //# -
       _this->remain = 0;
@@ -88,7 +121,7 @@ const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, cons
     }
     ++bytes;
     --(*size);
-    //# if psize is not None :
+    //# if psize != 0:
     ++_this->n_h_read;
     //# -
     _this->remain -= 7;
@@ -97,14 +130,22 @@ const void * _{{_p.prefix}}hrp_server_read_size({{_p.prefix}}hrp_t * _this, cons
 }
 //# -
 
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 void _{{_p.prefix}}hrp_server_after_read_size({{_p.prefix}}hrp_t * _this){
   if(_this->remain == 0){
+    if(_this->size <= _this->n_h_read){
+      _{{_p.prefix}}hrp_server_after_read(_this); // If size is 0 or 1, then this is padding, and the semantic of the size says "either it's a zero size packet that should be passed, either it's a less than psize bytes packet, then it can't even store the full psize... SKIP.
+      return;
+    }
     _this->state = {{_p.prefix}}hrp_READ_TYPE;
     _this->remain = {{tsize * 8 if tsize else 64}};
   }
 }
 
 
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_skip({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   if(_this->remain > *size){
@@ -118,7 +159,7 @@ const void * _{{_p.prefix}}hrp_server_skip({{_p.prefix}}hrp_t * _this, const voi
     bytes += _this->remain;
     _this->type = 0;
     _this->current_packet = NULL;
-    //# if psize is not None :
+    //# if psize != 0:
     _this->size = 0;
     _this->state = {{_p.prefix}}hrp_READ_SIZE;
     _this->remain = {{psize * 8 if psize else 64}};
@@ -144,13 +185,15 @@ const void * _{{_p.prefix}}hrp_server_skip({{_p.prefix}}hrp_t * _this, const voi
  * Note : `size` and `_this->remaining` will be changed accordingly.
  */
 //# if tsize:
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(_this->remain && *size){
     _this->type |= ( *bytes << ({{tsize * 8}} - _this->remain) );
     ++bytes;
     --(*size);
-    //# if psize is not None :
+    //# if psize != 0:
     ++_this->n_h_read;
     //# -
     _this->remain -= 8;
@@ -159,6 +202,8 @@ const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, cons
 }
 //# -
 //# else:
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   const uint8_t * bytes = (uint8_t *) data;
   while(*size){
@@ -166,7 +211,7 @@ const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, cons
     if(*bytes & 0b10000000){
       ++bytes;
       --(*size);
-      //# if psize is not None :
+      //# if psize != 0:
       ++_this->n_h_read;
       //# -
       _this->remain = 0;
@@ -174,7 +219,7 @@ const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, cons
     }
     ++bytes;
     --(*size);
-    //# if psize is not None :
+    //# if psize != 0:
     ++_this->n_h_read;
     //# -
     _this->remain -= 7;
@@ -183,10 +228,12 @@ const void * _{{_p.prefix}}hrp_server_read_type({{_p.prefix}}hrp_t * _this, cons
 }
 //# -
 
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 void _{{_p.prefix}}hrp_server_after_read_type({{_p.prefix}}hrp_t * _this){
   if(_this->remain == 0){
     _this->state = {{_p.prefix}}hrp_READ;
-//# if psize is None:
+//# if psize == 0:
     _this->remain = {{_p.prefix}}hrp_packet_size(_this->type);
     _this->current_packet = {{_p.prefix}}hrp_palloc(_this->type);
 //# -
@@ -206,6 +253,8 @@ void _{{_p.prefix}}hrp_server_after_read_type({{_p.prefix}}hrp_t * _this){
   }
 }
 
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 const void * _{{_p.prefix}}hrp_server_read({{_p.prefix}}hrp_t * _this, const void * data, size_t * size){
   size_t to_read = (_this->remain < *size) ? _this->remain : *size;
   if(to_read == 0){
@@ -218,12 +267,14 @@ const void * _{{_p.prefix}}hrp_server_read({{_p.prefix}}hrp_t * _this, const voi
   return ((const uint8_t *) data) + to_read;
 }
 
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
 void _{{_p.prefix}}hrp_server_after_read({{_p.prefix}}hrp_t * _this){
   if(_this->remain == 0){
     {{_p.prefix}}hrp_server_handle_packet(_this);
     _this->type = 0;
     _this->current_packet = NULL;
-    //# if psize is not None :
+    //# if psize != 0:
     _this->size = 0;
     _this->state = {{_p.prefix}}hrp_READ_SIZE;
     _this->remain = {{psize * 8 if psize else 64}};
@@ -244,7 +295,7 @@ void {{_p.prefix}}hrp_server_parse({{_p.prefix}}hrp_t * _this, const void * data
   for(;;) {
     switch (_this->state)
     {
-//# if psize is not None :
+//# if psize != 0:
       case {{_p.prefix}}hrp_READ_SIZE:
         data = _{{_p.prefix}}hrp_server_read_size(_this, data, &size);
         _{{_p.prefix}}hrp_server_after_read_size(_this);
@@ -273,7 +324,7 @@ void {{_p.prefix}}hrp_server_parse({{_p.prefix}}hrp_t * _this, const void * data
 
 void {{_p.prefix}}hrp_server_init({{_p.prefix}}hrp_t * _this){
   _this->type = 0;
-//# if psize is not None :
+//# if psize != 0:
   _this->size = 0;
   _this->state = {{_p.prefix}}hrp_READ_SIZE;
   _this->remain = {{psize * 8 if psize else 64}};
@@ -286,6 +337,7 @@ void {{_p.prefix}}hrp_server_init({{_p.prefix}}hrp_t * _this){
 }
 
 
+//# -
 
 // INITIALIZERS
 
@@ -296,13 +348,13 @@ void {{_p.prefix}}hrp_server_init({{_p.prefix}}hrp_t * _this){
 //#   if varlen_t is None:
 void {{sname}}_init({{sname}}_t * p){
   p->header.type = {{sname}}_type;
-//#     if psize is not None:
+//#     if psize != 0:
   p->header.size = sizeof_{{sname}}_packet;
 //#     -
 }
 //#   -
 //#   else:
-//#     if psize is None:
+//#     if psize == 0:
 //#       raise RuntimeError('Impossible to have varlen packet without variable packet size')
 //#     -
 void {{sname}}_init({{sname}}_t * p, {{_p.prefix}}hrp_stype_t size){

@@ -17,12 +17,12 @@ class FlexibleArray
   public:
     inline FlexibleArray()=default;
     inline ~FlexibleArray()=default;
-    inline T & operator[](size_t ind){
-      return reinterpret_cast<T*>(this)[ind];
-    }
-    inline const T & operator[](size_t ind) const{
-      return reinterpret_cast<const T*>(this)[ind];
-    }
+    // inline T & operator[](size_t ind){
+    //   return reinterpret_cast<T*>(this)[ind];
+    // }
+    // inline const T & operator[](size_t ind) const{
+    //   return reinterpret_cast<const T*>(this)[ind];
+    // }
     inline operator T * () { return reinterpret_cast<T*>(this); }
     inline operator const T * () const { return reinterpret_cast<const T*>(this); }
     inline T * ptr() { return reinterpret_cast<T*>(this); };
@@ -67,10 +67,29 @@ typedef {{ {1: 'uint8_t', 2: 'uint18_t', 4:'uint32_t', 8:'uint64_t' }[tsize] }} 
 typedef uint64_t {{_p.prefix}}hrp_ptype_t;
 //# -
 
-//# if psize is not None:
+//# if psize:
 typedef {{ {1: 'uint8_t', 2: 'uint18_t', 4:'uint32_t', 8:'uint64_t' }[psize] }} {{_p.prefix}}hrp_stype_t;
 //# -
 //# else:
 typedef uint64_t {{_p.prefix}}hrp_stype_t;
 //# -
 
+#ifndef {{_p.prefix}}HRP_FUNCTION_ATTR // So that one can add specific attributes for all functions
+#define {{_p.prefix}}HRP_FUNCTION_ATTR
+#endif
+
+#ifndef {{_p.prefix}}HRP_FUNCTION_ATTR_P_INIT // Packet init functions
+#define {{_p.prefix}}HRP_FUNCTION_ATTR_P_INIT
+#endif
+
+#ifndef {{_p.prefix}}HRP_FUNCTION_ATTR_PARSER // Parser functions
+#define {{_p.prefix}}HRP_FUNCTION_ATTR_PARSER
+#endif
+
+#ifndef {{_p.prefix}}HRP_FUNCTION_ATTR_MEM // palloc / pfree
+#define {{_p.prefix}}HRP_FUNCTION_ATTR_MEM
+#endif
+
+#ifndef {{_p.prefix}}HRP_FUNCTION_ATTR_UTILS // packet_size, etc.
+#define {{_p.prefix}}HRP_FUNCTION_ATTR_UTILS
+#endif

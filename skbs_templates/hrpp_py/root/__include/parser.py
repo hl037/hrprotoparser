@@ -3,7 +3,7 @@ class Parser(object):
       
   def __init__(self):
     self._type = 0
-## if psize is not None:
+## if psize != 0:
     self._size = 0
     self._state = self._READ_SIZE
     self._remain = {{psize * 8 if psize else 64}}
@@ -15,14 +15,14 @@ class Parser(object):
     self._n_h_read = 0
   
   def parse(self, data):
-    if len(data) == 0 :
-      return
-    while data :
+    prev_state = self._state
+    while data or prev_state != self._state:
+      prev_state = self._state
       data = self._state(data)
 
   
   
-## if psize is not None:
+## if psize != 0:
   def _READ_SIZE(self, data):
     offset = -1
     for offset, b in enumerate(data) :
@@ -69,7 +69,7 @@ class Parser(object):
 ##   -
     if self._remain == 0 :
       self._state = self._READ
-##  if psize is None:
+##  if psize == 0:
       self._remain = packets[self._type].size - self._n_h_read
 ##  -
 ##  else:
@@ -89,7 +89,7 @@ class Parser(object):
     else:
       self._type = 0
       self._current_packet = None
-## if psize is not None :
+## if psize != 0:
       self._size = 0
       self._state = self._READ_SIZE
       self._remain = {{psize * 8 if psize else 64}};
@@ -110,7 +110,7 @@ class Parser(object):
       self._handle_packet()
       self._type = 0
       self._current_packet = None
-## if psize is not None :
+## if psize != 0:
       self._size = 0
       self._state = self._READ_SIZE
       self._remain = {{psize * 8 if psize else 64}}

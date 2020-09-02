@@ -1,5 +1,5 @@
 """
-hrpotoparser C plugin.
+hrpotoparser Python plugin.
 """
 
 try:
@@ -34,7 +34,7 @@ p = plugin
 @hrprotoparser_cmd()
 def hrpp_cli(**kwargs):
   """
-  hrpotoparser C plugin.
+  hrpotoparser Python plugin.
   """
   plugin.update(kwargs)
 
@@ -143,11 +143,11 @@ def getPyType(f):
   while t.order == hrpp.Array.order:
     if t.nb is None:
       flexible = True
-      a_begin += 'VarLenArray.get_class('
+      a_begin = a_begin + 'VarLenArray.get_class('
       a_end = ')' + a_end
     else:
-      a_begin += 'Array.get_class('
-      a_end += f', {t.nb.name if t.nb.kind is hrpp.Constant.NAMED else str(t.nb.computed)})'
+      a_begin = a_begin + 'Array.get_class('
+      a_end = f', {t.nb.name if t.nb.kind is hrpp.Constant.NAMED else str(t.nb.computed)})' + a_end
     t = t.t
   if t.order == hrpp.Enum.order:
     t = t.type

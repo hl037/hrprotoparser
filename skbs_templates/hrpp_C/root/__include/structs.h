@@ -1,7 +1,7 @@
 //# from itertools import chain
 
 typedef struct {{_p.prefix}}hrp_header_s {
-//# if psize is not None:
+//# if psize != 0:
   {{_p.prefix}}hrp_stype_t size;
 //# -
   {{_p.prefix}}hrp_ptype_t type;
@@ -58,13 +58,9 @@ typedef struct {{sname}}_s {
 //# if varlen_t is not None:
   static constexpr size_t varlen_size = {{sizeof_varlen_t}};
 //# -
-  inline {{sname}}_s() : header{
-//# if psize is not None:
-    {{sname}}_s::size,
-//# -
-    {{sname}}_s::ptype,
-  } {}
+
 #endif
+  
   {{_p.prefix}}hrp_header_t header;
   union {
     {{sname}}_data_t data;
@@ -77,6 +73,8 @@ typedef struct {{sname}}_s {
 #ifdef __cplusplus
 extern "C" {
 #endif
+{{_p.prefix}}HRP_FUNCTION_ATTR
+{{_p.prefix}}HRP_FUNCTION_ATTR_P_INIT
 //# if varlen_t is None:
 void {{sname}}_init({{sname}}_t * p);
 //# -
@@ -86,7 +84,7 @@ void {{sname}}_init({{sname}}_t * p, {{_p.prefix}}hrp_stype_t size);
 #ifdef __cplusplus
 }
 #endif
-typedef void (*{{sname}}_handler_t) (const {{sname}}_t *);
+typedef void (*{{sname}}_handler_t) ({{sname}}_t *);
 
 #ifdef __cplusplus
 constexpr size_t sizeof_{{sname}} = {{sname}}_t::size;
@@ -132,4 +130,49 @@ typedef struct {{_p.prefix}}hrp_packet_u {
 //# -
   };
 }{{_p.prefix}}hrp_packet_t;
+
+#ifdef __cplusplus
+template<typename T>
+//# if psize != 0:
+T {{_p.prefix}}create_packet({{_p.prefix}}hrp_ptype_t size=T::packet_size){
+//# -
+//# else:
+T {{_p.prefix}}init_packet(){
+//# -
+  T p;
+//# if psize != 0:
+  p.header.size = size;
+//# -
+  p.header.type = T::ptype;
+  return p;
+}
+
+template<typename T>
+//# if psize != 0:
+void {{_p.prefix}}init_packet(T & p, {{_p.prefix}}hrp_ptype_t size=T::packet_size){
+//# -
+//# else:
+T {{_p.prefix}}init_packet(T & p){
+//# -
+//# if psize != 0:
+  p.header.size = size;
+//# -
+  p.header.type = T::ptype;
+}
+
+
+template<typename T>
+//# if psize != 0:
+void {{_p.prefix}}init_packet(T * p, {{_p.prefix}}hrp_ptype_t size=T::packet_size){
+//# -
+//# else:
+T {{_p.prefix}}init_packet(T * p){
+//# -
+//# if psize != 0:
+  p->header.size = size;
+//# -
+  p->header.type = T::ptype;
+}
+
+#endif
 

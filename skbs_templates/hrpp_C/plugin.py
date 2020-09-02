@@ -31,6 +31,8 @@ plugin = C()
 p = plugin
 
 # Put above additionnal options / arguments
+@click.option('--parser/--no-parser', is_flag=True, default=True)
+@click.option('--single-handler/--no-single-handler', is_flag=True, default=False)
 @hrprotoparser_cmd()
 def hrpp_cli(**kwargs):
   """
@@ -84,13 +86,15 @@ def getCType(f):
   t = f.type
   a = ''
   flexible = False;
+  close_parenthesis = ''
   while t.order == hrpp.Array.order:
     if t.nb is None:
       flexible = True
-      a += ')'
+      close_parenthesis += ')'
     else:
-      a = a + '[{}]'.format(t.nb.name if t.nb.kind is hrpp.Constant.NAMED else str(t.nb.computed))
+      a = a + '[{}]'.format(t.nb.name if t.nb.kind is hrpp.Constant.NAMED else str(t.nb.computed)) # In C language, array length order is reversed (C uses order of the dimension, not type composition)
     t = t.t
+  a += close_parenthesis
   if t.order == hrpp.Builtin.order:
     tt = c_types[t.name][0]
   elif t.order == hrpp.Struct.order or t.order == hrpp.Packet.order:

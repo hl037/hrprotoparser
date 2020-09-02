@@ -33,7 +33,7 @@ import types
 ## if psize:
 _psize = struct.Struct('<{{ {1 : 'B', 2: 'H', 4:'I', 8: 'Q'}[psize] }}')
 ## -
-## elif psize == 0:
+## elif psize is None:
 _psize = struct.Struct('<Q')
 
 _psize_levels = {{repr([ 2**(7*i)-i for i in range(1, 10) ])}}
@@ -85,6 +85,9 @@ class Type(object):
 
   def get_flat(self):
     return self.val,
+  
+  def __valrepr__(self, *args, **kwargs):
+    return self.__repr__(*args, **kwargs)
 
 ## for name, size, fmt, init in chain(_p.int_types, _p.uint_types, _p.float_types) :
 class {{name}}(Type):
@@ -100,6 +103,10 @@ class {{name}}(Type):
   struct = struct.Struct('<{{fmt}}')
   size = {{size}}
   nval = 1
+  def __repr__(self, indent=0):
+    return f'{{name}}({self.val})'
+  def __valrepr__(self, indent=0):
+    return repr(self.val)
 ## -
 
 class Array(Type):
@@ -123,6 +130,13 @@ class Array(Type):
     self.internal_val = [ self.type() for _ in range(self.n) ]
     self.val = self
     super().__init__(*args, **kwargs)
+
+  def __repr__(self, indent=0):
+    return (
+        f'{self.type.__name__}[{self.n}]''{\n' + '  ' * (indent + 1) + 
+        (',\n' + '  ' * (indent + 1)).join(v.__valrepr__(indent + 1) for v in self.internal_val) +
+        '\n' + '  ' * indent + '}'
+    )
 
   def set(self, val, deep=True):
     if len(val) > self.n:
@@ -151,6 +165,9 @@ class Array(Type):
   def __setitem__(self, k, v):
     return self.internal_val.__getitem__(k).set(v)
 
+  def __len__(self):
+    return self.n
+
   cache = {}
 
   @classmethod
@@ -162,7 +179,7 @@ class Array(Type):
       T = Array_
       cls.cache[(type, n)] = T
     return T
-## if psize is not None:
+## if psize != 0:
 
 class VarLenArray(Array, abstract=True):
   """
@@ -286,7 +303,7 @@ class Packet():
   def new(cls, name, **kwargs) -> _typehint_Type_['__class__']:
     return types.new_class(name, (cls,), kwargs, None)
 
-## if psize is not None:
+## if psize != 0:
 class VarLenPacket(Packet, abstract=True):
   def __init_subclass__(cls, /, struct, header_type, type, **kwargs):
     cls.struct = struct
@@ -361,6 +378,14 @@ class {{sname}}(Struct):
 
 ##     -
   # Methods
+
+  def __repr__(self, indent=0):
+    return ('{{sname}}{'
+##     for f in s.fields:
+      + "\n" + '  ' * (indent + 1) + f"{{f.name}} = {self._fields.{{f.name}}.__valrepr__(indent + 1)}"
+##     -
+      + '\n' + '  ' * indent + '}'
+    )
 
   def copyFrom(self, val):
 ##     for f in s.fields:
@@ -441,11 +466,11 @@ class Packets(object):
 ##   if s.order == _p.Packet.order:
 ##     header_type = encode_type(s.type.computed)
 ##     if varlen_t is None:
-##       if psize is None:
+##       if psize == 0:
 ##         s_psize = len(header_type) + sizeof_s
 ##         header_psize = b''
 ##       -
-##       elif psize == 0:
+##       elif psize is None:
 ##         s_psize = _p.compute_total_size(len(header_type) + sizeof_s)
 ##         header_psize = _p.encode_varint(s_psize)
 ##       -
