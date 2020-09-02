@@ -1,0 +1,3 @@
+[submodule "skbs_templates"]
+	path = skbs_templates
+	url = git@github.com:hl037/hrprotoparser-skbs-templates.git
