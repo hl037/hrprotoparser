@@ -26,10 +26,10 @@
 //#      psize = int(_p.proto.F['FIXEDSIZE'].val)
 //#   -
 //#   elif _p.bool(_p.proto.F['VARSIZE'].val):
-//#      psize = 0
+//#      psize = None
 //#   -
 //#   else:
-//#      psize = None
+//#      psize = 0
 //#   -
 //# -
 
