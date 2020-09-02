@@ -29,7 +29,7 @@ Then you have to clone the skbs templates to generate protocols :
 
 If you have cloned this repository from git, you only have to get the submodules with :
 
-    git submodule update -init --recursive
+    git submodule update --init --recursive
 
 Or if you installed from pypi, then clone the template repository only in some folder :
 
