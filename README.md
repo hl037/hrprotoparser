@@ -16,10 +16,57 @@ This library aims to provide a trivially simple protocol, suited for embedded ap
 
 Another benefit form HRPP is how it is architectured : one core library parsing the protocol file, and generated codes are simple skbs templates. This way, you can customize every aspect of the generated code with a trivial synthax.
 
+# Installation
+
+First install the packet with pip:
+
+    pip install hrprotoparser
+
+(Or `pip install .` if cloned from git).
+
+
+Then you have to clone the skbs templates to generate protocols :
+
+If you have cloned this repository from git, you only have to get the submodules with :
+
+    git submodule update -init --recursive
+
+Or if you installed from pypi, then clone the template repository only in some folder :
+
+    git clone https://github.com/hl037/hrprotoparser-skbs-templates skbs-template
+
+Then go to the directory
+
+    cd skbs-template
+
+and run :
+
+    for i in hrpp*; do skbs install --symlink $i; done
+    
+...To install the templates.
+
+Now, you can start using hrpp.
+
+
+# Usage
+
+To use one of the provided template, do the following :
+
+    skbs gen @hrpp_C <dest> -- -p protocol.hrp
+
+where `@hrpp_C` can be replaced by any hrpp template, and `<dest>` is the destination directory.
+
+To get help, simply do :
+
+    skbs gen @hrpp_C <dest> -- --help
+  
+You can also simply print the protocol content with :
+
+    skbs gen @hrpp_C <dest> -- --info
+
 # Synthax
 
 The protocol sythax is close to the C/C++/Java family.
-
 
 The protocol definition is entirely parseable using only regular expressions.
 
@@ -43,7 +90,7 @@ A constant can be used as an array size or a packet type.
 
 **Pattern : `E <EnumName> : <Type> {`**
 
-**Pattern of an enum constant : `<ConstantName> = <ConstantValue> // Optionnal documentation comment]`**
+**Pattern of an enum constant : `<ConstantName> = <ConstantValue> // Optionnal documentation comment`**
 
 **Pattern of the block end : `}`**
 
@@ -53,7 +100,7 @@ An enumeration groups constants under a same specialized type. This is only pure
 
 **Pattern : `S <Struct>  {`**
 
-**Pattern of a struct field : `<Type> <FieldName> // Optionnal docummentation comment]`**
+**Pattern of a struct field : `<Type> <FieldName> // Optionnal docummentation comment`**
 
 **Pattern of the block end : `}`**
 
@@ -80,12 +127,12 @@ The Direction may be one of :
 
 ## Base datatype
 
-  * int8/char, uint8/byte : signed and unsigned integer of 8 bits
-  * int16, uint16 : signed and unsigned integer of 16 bits
-  * int32, uint32 : signed and unsigned integer of 32 bits
-  * int64, uint64 : signed and unsigned integer of 64 bits
-  * float32 : floating point number using 32 bits
-  * float64 : floating point number using 64 bits
+  * `int8`/`char`, `uint8`/`byte` : signed and unsigned integer of 8 bits
+  * `int16`, `uint16` : signed and unsigned integer of 16 bits
+  * `int32`, `uint32` : signed and unsigned integer of 32 bits
+  * `int64`, `uint64` : signed and unsigned integer of 64 bits
+  * `float32` : floating point number using 32 bits
+  * `float64` : floating point number using 64 bits
 
 ## Array types
 
@@ -122,7 +169,7 @@ It is the concatenation of the packet size (if one), the packet type, and the C 
 
 # Disclaimer
 
-The some part of the code base is quite old (2014). It works but may not be the most beautiful code I've ever done... May be some day I will rewrite it from scratch...
+Some part of the code base is quite old (2014). It works but may not be the most beautiful code I've ever done... May be some day I will rewrite it from scratch...
 
 # License
 
