@@ -78,7 +78,7 @@ Any text that doesn't match a statement is comment. (No // or # everywhere, you 
 
 **Pattern : `F <FlagName> = <ConstantValue>`**
 
-A flag is some kind of configuration. There are standard flag the impact the binary format of the protocol encoding. Si the section "Standard Flags" for more details
+A flag is some kind of configuration. There are standard flags changing the binary format of the protocol encoding. See the "Standard Flags" section for more details.
 
 ## Constants
 
@@ -94,7 +94,7 @@ A constant can be used as an array size or a packet type.
 
 **Pattern of the block end : `}`**
 
-An enumeration groups constants under a same specialized type. This is only pure semantic and the binary format of the protocol don't care if a value is an enum, or an integer / float.
+An enumeration groups constants under a same specialized type. This is only pure semantic and the binary format of the protocol doesn't care if a value is an enum, or an integer / float.
 
 ## Struct
 
@@ -119,8 +119,8 @@ The Direction may be one of :
   * `>`  "client to server"
   * `<`  "server to client"
   * `<>` "any direction"
-  * `PeerA > PeerB` "PeerA to PeerB"
-  * `PeerB < PeerA` "PeerB to PeerA" (a response)
+  * [NOT IMPLEMENTED YET] `PeerA > PeerB` "PeerA to PeerB"
+  * [NOT IMPLEMENTED YET] `PeerB < PeerA` "PeerB to PeerA" (a response)
 
 
 # Datatypes
