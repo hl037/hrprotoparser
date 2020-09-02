@@ -15,7 +15,7 @@ def read_file(name):
         print("could not read %r" % name)
         f.close()
 
-LONG_DESC = read_file('README.rst') + '\n\n' + read_file('HISTORY.rst')
+LONG_DESC = read_file('README.md') + '\n\n' + read_file('HISTORY.md')
 
 EXTRAS = {}
 
