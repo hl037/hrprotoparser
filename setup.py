@@ -24,7 +24,7 @@ if sys.version_info < (3,):
 
 setup(
     name='hrprotoparser',
-    version='0.1.dev1',
+    version='0.1.dev2',
     description='Human Readable protocol parser',
     long_description=LONG_DESC,
     long_description_content_type='text/markdown',
@@ -36,7 +36,7 @@ setup(
     test_suite=None,
     include_package_data=True,
     zip_safe=False,
-    install_requires=['skbs'],
+    install_requires=['skbs', 'click'],
     extras_require=None,
     entry_points={
       'console_scripts':[
